@@ -1,0 +1,105 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  6
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// these variables are set from the python scripts
+NumX1 900;
+NumY1 122;
+NumZ1 30;
+
+MinX -0.51;
+MaxX 0.39;
+MinY -0.061;
+MaxY 0.061;
+MinZ -0.0105;
+MaxZ 0.0195;
+
+vertices
+(
+    ( $MinX $MinY $MinZ )
+    ( $MaxX $MinY $MinZ )
+    ( $MaxX $MaxY $MinZ )
+    ( $MinX $MaxY $MinZ )
+	
+    ( $MinX $MinY $MaxZ )
+    ( $MaxX $MinY $MaxZ )
+    ( $MaxX $MaxY $MaxZ )
+    ( $MinX $MaxY $MaxZ )
+
+);
+
+blocks
+(
+	hex ( 0 1 2 3 4 5 6 7 ) ( $NumX1 $NumY1 $NumZ1 ) simpleGrading ( 1 1 1 )
+);
+
+edges
+(
+);
+
+boundary
+(
+    Inlet
+    {
+        type patch;
+        faces
+        (
+            (0 4 7 3)
+        );
+    }
+    Outlet
+    {
+        type patch;
+        faces
+        (
+            (2 6 5 1)
+        );
+    }
+
+    RightWall
+    {
+        type wall;
+        faces
+        (
+            (1 5 4 0)
+        );
+    }
+    LeftWall
+    {
+        type wall;
+        faces
+        (
+            (3 7 6 2)
+        );
+    }
+    Floor
+    {
+        type wall;
+        faces
+        (
+            (0 3 2 1)
+        );
+    }
+    Ceiling
+    {
+        type wall;
+        faces
+        (
+            (4 5 6 7)
+        );
+    }
+);
+
+// ************************************************************************* //

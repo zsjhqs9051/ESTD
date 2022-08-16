@@ -1,0 +1,95 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  6
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application			pimpleFoam;
+startFrom			latestTime;
+startTime			0;
+stopAt				endTime;
+endTime				%physicalTime%;
+deltaT				%deltaT%;
+writeControl		adjustableRunTime;
+writeInterval		0.1;
+purgeWrite			3;
+writeFormat			ascii;
+writePrecision  	9;
+timeFormat			general;
+timePrecision		9;
+runTimeModifiable	true;
+adjustTimeStep		yes;
+maxCo				%maxCo%;
+maxDeltaT			%maxDeltaT%;
+functions
+{
+	#includeFunc wallShearStress;
+	#includeFunc yPlus;
+	#includeFunc residuals;
+	#includeFunc writeCellCentres;
+	Forces
+	{
+		type forces; 
+        	functionObjectLibs ("libforces.so"); 
+       		patches (Sample);
+        		log true; 
+        		rho rhoInf; 
+        		rhoInf 997.561; 
+        		CofR (0 0 0);
+        		liftDir (0 1 0); 
+        		dragDir (1 0 0); 
+        		writeControl    adjustableRunTime;
+        		writeInterval   0.1;
+	}
+	PathCellsArea
+	{
+		type coded;
+		functionObjectLibs ("libutilityFunctionObjects.so");
+		name PathCellsArea;
+		enabled         true;
+           	codeOptions
+           	#{
+           	     -I$(LIB_SRC)/finiteVolume/lnInclude \
+           	     -I$(LIB_SRC)/meshTools/lnInclude
+           	#};
+
+          	 codeInclude
+          	 #{
+          	      #include "fvCFD.H"
+          	 #};
+		
+           codeWrite
+           #{
+              const Time& runTime = mesh().time();
+                if ( runTime.value () == %physicalTime%) {
+                     const polyBoundaryMesh& boundaryMesh = mesh().boundaryMesh();
+                     label patchID = boundaryMesh.findPatchID("Sample");
+                     const scalarField& magSf = mesh().boundary()[patchID].magSf ();
+                     static autoPtr<volScalarField> pFaceA;
+                     if(!pFaceA.valid()) {
+
+                           pFaceA.set ( new volScalarField ( IOobject ( "FaceArea", runTime.timeName(), mesh(), IOobject::NO_READ, IOobject::NO_WRITE ),
+
+                                mesh(), dimensionedScalar("FaceArea", dimensionSet(0,2,0,0,0,0,0), 0.0) ) );
+
+                     }
+                     forAll(pFaceA->boundaryFieldRef()[patchID], i) { pFaceA->boundaryFieldRef()[patchID][i] = magSf[i]; }
+                     const volScalarField& fFaceA = obr_.lookupObject<volScalarField>("FaceArea");
+                     fFaceA.write();
+                }
+           #};	
+	}
+}
+
+// ************************************************************************* //

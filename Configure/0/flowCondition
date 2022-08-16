@@ -1,0 +1,7 @@
+d50			%d50%;
+flowrate 	%flowrate%;
+velocity	(%U% 0 0);
+k		%k%;
+epsilon	%epsilon%;
+nut		%nut%;
+
