@@ -21,8 +21,8 @@ NumZ1 30;
 
 MinX -0.51;
 MaxX 0.39;
-MinY -0.061;
-MaxY 0.061;
+MinY -0.06;
+MaxY 0.06;
 MinZ -0.0105;
 MaxZ 0.0195;
 
