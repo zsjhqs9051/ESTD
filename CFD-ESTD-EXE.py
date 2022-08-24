@@ -17,8 +17,7 @@ for N in range ( len ( sys.argv ) ):
 	else:
 		Value = 16
 ############input information
-SampleSurfacePath = 'test-sample-surface'
-CFDModelPath = 'Configure'
+
 
 R_sample = 0.04
 d50 = 1.5 #mm
@@ -30,6 +29,13 @@ maxDeltaT = 0.005
 TimeControl = { 'MinimumDeltaT': deltaT,
 						'TargetDeltaT': maxDeltaT,
 						'AllowableTargetCount': maxCo}
+
+CFDModelPath = 'Configure'
+
+SampleSurfacePath = 'test-sample-surface/'
+if os.path.exists(SampleSurfacePath):
+	shutil.rmtree(SampleSurfacePath)
+os.makedirs(SampleSurfacePath)
 
 postFolder = 'PostProcess/'
 if os.path.exists(postFolder):
