@@ -8,21 +8,28 @@ from PrepareProcess import *
 from Supports import *
 from OpenFOAMConduct import *
 
-for N in range ( len ( sys.argv ) ):
-	if N > 0:
-		if  sys.argv[N].startswith ( 'c=' ):
-			Value = int ( sys.argv[N][2:] )
-		else:
-			sys.exit ()
-	else:
-		Value = 16
-############input information
-SampleSurfacePath = 'test-sample-surface'
-CFDModelPath = 'Configure'
+#command information python CFD-ESTD-EXE.py [c=16] [g=3]
+#c is the processor number of each case, default value is 16
+#g is the subprocessor number,default value is 1
+Value = 16
+Group = 1
+for cmd in sys.argv:
+	if cmd.startswith ( 'c=' ):
+		Value = int ( cmd[2:] )
+	if  cmd.startswith ( 'g=' ):
+		Group = int ( cmd[2:] )
 
-R_sample = 0.04
-d50 = 1.5 #mm
-time = 10  #s
+#CFD information
+#radius of the hole on the channel bed
+R_sample = 0.04      #m
+
+#input the d50 of soil sample
+d50 = 1.5      #mm
+
+#physical time
+time = 10      #s
+
+
 ks = 2 * d50 *0.001
 deltaT = 1e-6
 maxCo = 150
@@ -31,10 +38,17 @@ TimeControl = { 'MinimumDeltaT': deltaT,
 						'TargetDeltaT': maxDeltaT,
 						'AllowableTargetCount': maxCo}
 
+#necessary folder route
+#Openfoam Model Template
+CFDModelPath = 'Configure'
+
+#folder to save the generated soil sample surface stl
+SampleSurfacePath = 'test-sample-surface'
+foldergenerator(SampleSurfacePath)
+
+#folder to save postprocessor data
 postFolder = 'PostProcess/'
-if os.path.exists(postFolder):
-	shutil.rmtree(postFolder)
-os.makedirs(postFolder)
+foldergenerator(postFolder)
 dataanalysis = 'PostProcess/DataAnalysis.txt'
 if os.path.exists(dataanalysis):
 	os.remove(dataanalysis)
@@ -42,10 +56,16 @@ with open (dataanalysis,'a+') as f:
 	ftitle = 'Case\tFlow Rate (L/s)\t' + 'tau_nominal (pa)'\
 		+'\tFd/A (pa)\ttau_x (pa)\tFx/A (pa)\n'
 	f.write (ftitle)
-motherPatch = os.getcwd()
+	
+#log file
 logPath1 = 'log.txt'
 if os.path.exists(logPath1):
 	os.remove(logPath1)
+	
+motherPatch = os.getcwd()
+
+	
+'''
 
 ######prepare process
 prepare = PrepareProcess()
@@ -119,3 +139,4 @@ for sample1 in FlowCondition.keys():
 			content = sample + ' finished!\n\n'
 			log.write(content)
 		os.chdir(motherPatch)
+'''

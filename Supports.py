@@ -5,6 +5,11 @@ import sys
 import shutil
 import time
 
+def foldergenerator(path):
+	if os.path.exists(path):
+		shutil.rmtree(path)
+	os.makedirs(path)
+
 def replacement(route,replacedict = {}):
 	with open(route) as file:
 		content = file.read()
