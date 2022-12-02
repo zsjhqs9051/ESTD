@@ -12,7 +12,7 @@ from OpenFOAMConduct import *
 #c is the processor number of each case, default value is 16
 #g is the subprocessor number,default value is 1
 Value = 16
-Group = 1
+Group = 3
 for cmd in sys.argv:
 	if cmd.startswith ( 'c=' ):
 		Value = int ( cmd[2:] )
@@ -46,17 +46,17 @@ CFDModelPath = 'Configure'
 SampleSurfacePath = 'test-sample-surface'
 foldergenerator(SampleSurfacePath)
 
-#folder to save postprocessor data
-postFolder = 'PostProcess/'
-foldergenerator(postFolder)
-dataanalysis = 'PostProcess/DataAnalysis.txt'
-if os.path.exists(dataanalysis):
-	os.remove(dataanalysis)
-with open (dataanalysis,'a+') as f:
-	ftitle = 'Case\tFlow Rate (L/s)\t' + 'tau_nominal (pa)'\
-		+'\tFd/A (pa)\ttau_x (pa)\tFx/A (pa)\n'
-	f.write (ftitle)
-	
+# #folder to save postprocessor data
+# postFolder = 'PostProcess/'
+# foldergenerator(postFolder)
+# dataanalysis = 'PostProcess/DataAnalysis.txt'
+# if os.path.exists(dataanalysis):
+# 	os.remove(dataanalysis)
+# with open (dataanalysis,'a+') as f:
+# 	ftitle = 'Case\tFlow Rate (L/s)\t' + 'tau_nominal (pa)'\
+# 		+'\tFd/A (pa)\ttau_x (pa)\tFx/A (pa)\n'
+# 	f.write (ftitle)
+# 	
 #log file
 logPath1 = 'log.txt'
 if os.path.exists(logPath1):
@@ -65,12 +65,10 @@ if os.path.exists(logPath1):
 motherPatch = os.getcwd()
 
 	
-'''
-
 ######prepare process
 prepare = PrepareProcess()
 FlowCondition = prepare.sheetread()
-
+CFDCaseName = []
 for sample1 in FlowCondition.keys():
 	print(sample1)
 	sample = prepare.scanbed(sample1)
@@ -88,12 +86,13 @@ for sample1 in FlowCondition.keys():
 			content = '\t' + sample + ' is laminar flow!\n'
 			log.write(content)
 	else:
+		CFDCaseName.append(sample)
 		shutil.copytree('Configure',sample)
 		#copy sample surface stl file
 		src = 'test-sample-surface/' + sample + '.stl'
 		dst = sample + '/constant/triSurface/Sample.stl'
-		bedcmd = 'surfaceMeshConvert ' + src + ' ' + dst + ' -scaleIn 0.001'
-		os.system(bedcmd)
+		#bedcmd = 'surfaceMeshConvert ' + src + ' ' + dst + ' -scaleIn 0.001'
+		#os.system(bedcmd)
 		#prepare openfoam model
 		os.chdir(sample)
 		replacedict = {'d50':str(ks),'flowrate':str(Q),'U':str(U),'k':str(k),'epsilon':str(epsilon),'nut':str(nut)}
@@ -106,37 +105,49 @@ for sample1 in FlowCondition.keys():
 		replacedict = {'physicalTime' : str(time),'deltaT' : str(deltaT),\
 				 'maxCo' : str(maxCo),'maxDeltaT' : str(maxDeltaT)}
 		replacement(route,replacedict)
-		with open (logPath,'a+') as log:
-			content = '\t' + sample + ' is meshing!\n'
-			log.write(content)
-		RunOpenFOAMTool('paraFoam', Options = '-touch' )
-		RunOpenFOAMTool('surfaceFeatures' )
-		RunOpenFOAMTool('blockMesh' )
-		RunOpenFOAMTool('decomposePar' )
-		RetCode = RunOpenFOAMTool('snappyHexMesh',Options = '-overwrite',NumberCores = Value,TimeControl = TimeControl )
-		RunOpenFOAMTool('reconstructParMesh',Options = '-constant' )
-		RunOpenFOAMTool('checkMesh' )
-		DeleteProcessors()
-
-		with open (logPath,'a+') as log:
-			content = '\t' + sample + ' is running!\n'
-			log.write(content)
-		RunOpenFOAMTool('decomposePar' )
-		RetCode = RunOpenFOAMTool('pimpleFoam',NumberCores = Value,TimeControl = TimeControl )
-		RunOpenFOAMTool('reconstructPar',Options = '-latestTime' )
-		DeleteProcessors()
-		DataSample()
-		Datacollection = PostProcess()
-		FdA,FtauxA,FxA = Datacollection.Force(time,sample,R_sample)
-		TauNominal = Datacollection.TauAnalysis(time, sample,R_sample)
-		Datacollection.VelocityProfile(time, sample)
-		with open ('../'+dataanalysis,'a+') as f:
-			ftitle = sample +'\t' + str(Q * 1000.0) +'\t' \
-				+ str(TauNominal) +'\t' + str(FdA) +'\t' \
-					+ str(FtauxA) +'\t'  + str(FxA) +'\n'
-			f.write (ftitle)
-		with open (logPath,'a+') as log:
-			content = sample + ' finished!\n\n'
-			log.write(content)
 		os.chdir(motherPatch)
-'''
+#Group CFD models
+for i in range(Group):
+	GroupFolder = 'Group' + str(i)
+	if os.path.exists(GroupFolder):
+			os.remove(GroupFolder)
+	os.mkdir(GroupFolder)
+for i in range(len(CFDCaseName)):
+	srcCFD = CFDCaseName[i]
+	GroupNo = int(i%Group)
+	tgtCFD = 'Group' + str(GroupNo) + '/' + CFDCaseName[i]
+	shutil.move(srcCFD,tgtCFD)
+
+		#with open (logPath,'a+') as log:
+		#	content = '\t' + sample + ' is meshing!\n'
+		#	log.write(content)
+		#RunOpenFOAMTool('paraFoam', Options = '-touch' )
+		#RunOpenFOAMTool('surfaceFeatures' )
+		#RunOpenFOAMTool('blockMesh' )
+		#RunOpenFOAMTool('decomposePar' )
+		#RetCode = RunOpenFOAMTool('snappyHexMesh',Options = '-overwrite',NumberCores = Value,TimeControl = TimeControl )
+		#RunOpenFOAMTool('reconstructParMesh',Options = '-constant' )
+		#RunOpenFOAMTool('checkMesh' )
+		#DeleteProcessors()
+
+		#with open (logPath,'a+') as log:
+		#	content = '\t' + sample + ' is running!\n'
+		#	log.write(content)
+		#RunOpenFOAMTool('decomposePar' )
+		#RetCode = RunOpenFOAMTool('pimpleFoam',NumberCores = Value,TimeControl = TimeControl )
+		#RunOpenFOAMTool('reconstructPar',Options = '-latestTime' )
+		#DeleteProcessors()
+		#DataSample()
+		#Datacollection = PostProcess()
+		#FdA,FtauxA,FxA = Datacollection.Force(time,sample,R_sample)
+		#TauNominal = Datacollection.TauAnalysis(time, sample,R_sample)
+		#Datacollection.VelocityProfile(time, sample)
+		#with open ('../'+dataanalysis,'a+') as f:
+		#	ftitle = sample +'\t' + str(Q * 1000.0) +'\t' \
+		#		+ str(TauNominal) +'\t' + str(FdA) +'\t' \
+		#			+ str(FtauxA) +'\t'  + str(FxA) +'\n'
+		#	f.write (ftitle)
+		#with open (logPath,'a+') as log:
+		#	content = sample + ' finished!\n\n'
+		#	log.write(content)
+		#os.chdir(motherPatch)
