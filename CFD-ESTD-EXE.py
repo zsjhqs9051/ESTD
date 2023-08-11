@@ -58,6 +58,7 @@ foldergenerator(SampleSurfacePath)
 # 	f.write (ftitle)
 # 	
 #log file
+
 logPath1 = 'log.txt'
 if os.path.exists(logPath1):
 	os.remove(logPath1)
